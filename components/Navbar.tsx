@@ -1,10 +1,11 @@
 "use client"
 import { cn } from '@/lib/utils'
-import { Show, SignInButton, SignUpButton, UserButton } from '@clerk/nextjs'
+import { Show, SignInButton, SignUpButton, UserButton, useUser } from '@clerk/nextjs'
+import { User } from '@clerk/nextjs/server'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import React from 'react'
+import React, { use } from 'react'
 
 const navItems = [
     {label:"Library", href:"/"},
@@ -13,8 +14,9 @@ const navItems = [
 
 const Navbar = () => {
     const pathName = usePathname()
+    const {user} = useUser()
   return (
-    <header className='w-full fixed z-50 bg-[var(--bg-primary)]'>
+    <header className="w-full fixed z-50 bg-[var(--bg-primary)]">
       <div className="wrapper navbar-height py-4 px-4 flex justify-between items-center">
         <Link href="/" className="flex gap-0.5 items-center">
           <Image
@@ -24,21 +26,25 @@ const Navbar = () => {
             height={26}
             priority
           />
-          <span className='logo-text'>Bookified</span>
+          <span className="logo-text">Bookified</span>
         </Link>
-        <nav className='w-fit flex gap-7.5 items-center'>
-          {
-            navItems.map(({label, href})=>{
-                 const isActive = pathName === href ||
-                 (href !== "/" && pathName.startsWith(href))
-                 return (
-                    <Link href={href} key={label}
-                    className={cn('nav-link-base', isActive? 'nav-link-active':'text-black hover:opacity-70')}>
-                        {label}
-                    </Link>
-                 )
-            })
-          }
+        <nav className="w-fit flex gap-7.5 items-center">
+          {navItems.map(({ label, href }) => {
+            const isActive =
+              pathName === href || (href !== "/" && pathName.startsWith(href));
+            return (
+              <Link
+                href={href}
+                key={label}
+                className={cn(
+                  "nav-link-base",
+                  isActive ? "nav-link-active" : "text-black hover:opacity-70",
+                )}
+              >
+                {label}
+              </Link>
+            );
+          })}
         </nav>
         <div className="flex items-center gap-3">
           <Show when="signed-out">
@@ -47,6 +53,14 @@ const Navbar = () => {
           </Show>
           <Show when="signed-in">
             <UserButton />
+            {user?.firstName && (
+              <Link href="/subscriptions" className="nav-user-name">
+                {user.username ??
+                  user.firstName ??
+                  user.fullName ??
+                  user.primaryEmailAddress?.emailAddress}
+              </Link>
+            )}
           </Show>
         </div>
       </div>

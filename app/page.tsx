@@ -1,10 +1,10 @@
-import { Button } from "@/components/ui/button";
-import Image from "next/image";
+import HeroSection from "@/components/HeroSection";
 
 export default function Home() {
   return (
-    <div >
-       
-    </div>
+    <main>
+      <HeroSection />
+      <div className="library-hero-grid">{}</div>
+    </main>
   );
 }
