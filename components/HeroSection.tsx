@@ -23,7 +23,7 @@ const steps = [
 
 export default function HeroSection() {
   return (
-    <section className="wrapper mt-20">
+    <section className="wrapper mt-5 mb-10 md:mb-16">
       <div className="library-hero-card rounded-[14px] bg-[#f3e4c7] px-7 py-8 sm:px-9 md:px-12 lg:px-9 lg:py-10 mt-5">
         <div className="grid items-center gap-7 lg:grid-cols-[1fr_1.2fr_0.9fr]">
           <div className="space-y-5 text-center lg:text-left">
