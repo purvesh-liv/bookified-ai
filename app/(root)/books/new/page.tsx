@@ -8,7 +8,7 @@ const page = () => {
         <section className="flex flex-col gap-5">
           <h1 className="page-title-xl">Add new book</h1>
           <p className="subtitle">
-            Upload a PDF to generate your intereactive interview
+            Upload a PDF to generate your intereactive Reading experience
           </p>
           <UploadForm />
         </section>
