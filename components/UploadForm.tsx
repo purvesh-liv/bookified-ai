@@ -17,24 +17,117 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { cn } from "@/lib/utils"
+import { cn, parsePDFFile } from "@/lib/utils"
 import { UploadSchema, type UploadFormValues } from "@/lib/zod"
+import { useAuth } from "@clerk/nextjs"
+import { toast } from "sonner"
+import { checkBookExists, createBook, saveBookSegments } from "@/lib/actions/book.actions"
+import { exists } from "fs"
+import { useRouter } from "next/navigation";
+import {upload, uploadPart} from "@vercel/blob/client"
+import { error } from "console"
+
 
 const UploadForm = () => {
   const pdfInputRef = useRef<HTMLInputElement | null>(null)
   const coverInputRef = useRef<HTMLInputElement | null>(null)
+  const {userId} = useAuth()
+  const router = useRouter()
 
   const form = useForm<UploadFormValues>({
     resolver: zodResolver(UploadSchema),
     defaultValues: {
       title: "",
       author: "",
-      voice: "rachel",
+      persona:'',
+      pdfFile:undefined,
+      coverImage:undefined,
+      
     },
   })
 
-  const onSubmit = async () => {
-    await new Promise((resolve) => setTimeout(resolve, 1200))
+  const onSubmit = async (data:UploadFormValues) => {
+    if(!userId){
+     return toast.error("please login to upload books")
+    }
+    // posthog -> track book uploads..
+    try {
+       const existCheck = await checkBookExists(data.title)
+       if(existCheck.exists && existCheck.book){
+         toast.error("book with the same title already exist . ")
+        form.reset()
+        router.push(`/books/${existCheck.book.slug}`)
+        return
+       }
+        // parsing the pdf
+       const fileTitle = data.title.replace(/\s+/g,'-').toLowerCase();
+       const pdfFile = data.pdfFile
+ 
+       const parsedPDF = await parsePDFFile(pdfFile)
+       if(parsedPDF.content.length ===0){
+        toast.error("failed to parse pdf. please try again wiht a different file")
+        return;
+       }
+      // uploading the pdf to vercel blob
+       const uploadedPdfBlob = await upload(fileTitle,pdfFile,{
+        access:'public',
+        handleUploadUrl:'/api/upload',
+        contentType:'application/pdf'
+       });
+
+       let coverUrl:string;
+
+       if(data.coverImage){
+        const coverFile = data.coverImage;
+        const uploadedCoverBlob = await upload(`${fileTitle}_cover.png`,coverFile,{
+          access:'public',
+          handleUploadUrl:'/api/upload',
+          contentType:coverFile.type
+        })
+        coverUrl = uploadedCoverBlob.url;
+       }else{
+        const response = await fetch(parsedPDF.cover)
+        const blob = await response.blob();
+
+        const uploadedCoverBlob = await upload(`${fileTitle}`, blob, {
+          access: "public",
+          handleUploadUrl: "/api/upload",
+          contentType: "image/png",
+        });
+        coverUrl = uploadedCoverBlob.url;
+       }
+
+       const book = await createBook({
+        clerkId:userId,
+        title:data.title,
+        author:data.author,
+        persona:data.persona,
+        fileURL:uploadedPdfBlob.url,
+        fileBlobKey:uploadedPdfBlob.pathname,
+        coverURL:coverUrl,
+        fileSize:pdfFile.size
+       });
+       if(!book.success) throw new Error("Failed to create book")
+      
+        if (book.alreadyExists) {
+          toast.error("book with the same title already exist . ");
+          form.reset();
+          router.push(`/books/${existCheck.book.slug}`);
+          return;
+        }
+        // if the book doesnt already exists then save the segments
+        const segments = await saveBookSegments(book.data._id,userId,parsedPDF.content)
+
+        if(!segments?.success){
+          toast.error("failed to save book segments")
+             throw new Error("failed to save book segments");
+        } 
+        form.reset()
+        router.push('/')
+    } catch (error) {
+      console.error(error)
+      toast.error("failed to upload book. please try again later")
+    }
   }
 
   return (
@@ -45,7 +138,7 @@ const UploadForm = () => {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <FormField
             control={form.control}
-            name="pdf"
+            name="pdfFile"
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="form-label">Book PDF File</FormLabel>
@@ -100,7 +193,7 @@ const UploadForm = () => {
 
           <FormField
             control={form.control}
-            name="cover"
+            name="coverImage"
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="form-label">
@@ -200,7 +293,7 @@ const UploadForm = () => {
 
           <FormField
             control={form.control}
-            name="voice"
+            name="persona"
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="form-label">
