@@ -71,7 +71,7 @@ const UploadForm = () => {
       // uploading the pdf to vercel blob
        const uploadedPdfBlob = await upload(fileTitle,pdfFile,{
         access:'public',
-        handleUploadUrl:'/api/upload',
+        handleUploadUrl:'/api/uploads',
         contentType:'application/pdf'
        });
 
@@ -81,7 +81,7 @@ const UploadForm = () => {
         const coverFile = data.coverImage;
         const uploadedCoverBlob = await upload(`${fileTitle}_cover.png`,coverFile,{
           access:'public',
-          handleUploadUrl:'/api/upload',
+          handleUploadUrl:'/api/uploads',
           contentType:coverFile.type
         })
         coverUrl = uploadedCoverBlob.url;
@@ -91,7 +91,7 @@ const UploadForm = () => {
 
         const uploadedCoverBlob = await upload(`${fileTitle}`, blob, {
           access: "public",
-          handleUploadUrl: "/api/upload",
+          handleUploadUrl: "/api/uploads",
           contentType: "image/png",
         });
         coverUrl = uploadedCoverBlob.url;

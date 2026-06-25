@@ -6,6 +6,7 @@ import { generateSlug, serializeData } from "../utils";
 import Book from "@/database/models/book.model";
 import BookSegment from "@/database/models/book-segment.model";
 import { log } from "console";
+import { create } from "domain";
 
 
 // server actions
@@ -74,6 +75,7 @@ export const createBook = async(data:CreateBook) =>{
 
 // save the segments 
 export const saveBookSegments = async(bookId:string,clerkid:string,segments:TextSegment[])=>{
+
     try {
         await connectToDatabase();
 
@@ -103,4 +105,23 @@ export const saveBookSegments = async(bookId:string,clerkid:string,segments:Text
             error:error
         }
     }
+}
+
+export const getAllBooks = async()=>{
+       try {
+         await connectToDatabase()
+
+         const books = await Book.find().sort({createdAt:-1}).lean()
+
+         return{
+            success:true,
+            data:serializeData(books)
+         }
+       } catch (error) {
+            console.error("error connecting to db")
+            return{
+                success:false,
+                error:error
+            }
+       }
 }
