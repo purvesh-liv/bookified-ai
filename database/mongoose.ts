@@ -1,12 +1,4 @@
-import { error, log } from "console";
 import mongoose from "mongoose";
-import { fa } from "zod/v4/locales";
-
-const MONGODB_URI = process.env.MONGODB_URI;
-
-if(!MONGODB_URI){
-    throw new Error("please define the MONGODB_URI env vairable")
-}
 declare global{
     var mongooseCache:{
         conn: typeof mongoose | null
@@ -14,9 +6,15 @@ declare global{
     }
 }
 
-let cached = global.mongooseCache || (global.mongooseCache = {conn:null, promise:null})
+const cached = global.mongooseCache || (global.mongooseCache = {conn:null, promise:null})
 
 export const connectToDatabase = async()=>{
+    const MONGODB_URI = process.env.MONGODB_URI;
+
+    if(!MONGODB_URI){
+        throw new Error("please define the MONGODB_URI env variable")
+    }
+
     if(cached.conn) return cached.conn
 
     if(!cached.promise){

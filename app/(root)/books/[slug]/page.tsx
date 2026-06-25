@@ -6,6 +6,8 @@ import { redirect } from "next/navigation";
 
 import { getBookBySlug } from "@/lib/actions/book.actions";
 
+export const dynamic = "force-dynamic";
+
 export default async function BookDetailsPage({
   params,
 }: {
