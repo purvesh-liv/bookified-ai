@@ -125,3 +125,32 @@ export const getAllBooks = async()=>{
             }
        }
 }
+
+export const getBookBySlug = async(slug:string)=>{
+       try {
+         await connectToDatabase()
+
+         const book = await Book.findOne({slug})
+           .select("title author coverURL persona")
+           .lean()
+
+         if(!book){
+            return{
+                success:false,
+                data:null
+            }
+         }
+
+         return{
+            success:true,
+            data:serializeData(book)
+         }
+       } catch (error) {
+            console.error("error fetching book by slug", error)
+            return{
+                success:false,
+                data:null,
+                error:error
+            }
+       }
+}
