@@ -3,6 +3,8 @@ import HeroSection from "@/components/HeroSection";
 import { getAllBooks } from "@/lib/actions/book.actions";
 import { sampleBooks } from "@/lib/constants";
 
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   const bookResults = await getAllBooks()
   const books = bookResults.success ? bookResults.data ?? []:[]
