@@ -87,7 +87,7 @@ export const saveBookSegments = async(bookId:string,clerkid:string,segments:Text
         }))
         await BookSegment.insertMany(segmentsToInsert);
 
-        await Book.findByIdAndUpdate(bookId,{totalsegments:segments.length})
+        await Book.findByIdAndUpdate(bookId,{totalSegments:segments.length})
         console.log("book segments saved succesfully");
         
         return{

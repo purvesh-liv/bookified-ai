@@ -3,6 +3,7 @@
 import VoiceSession from "@/database/models/voice-session.model"
 import { connectToDatabase } from "@/database/mongoose"
 import { EndSessionResult, StartSessionResult } from "@/types"
+import { auth } from "@clerk/nextjs/server"
 import { getCurrentRouteCacheVersion } from "next/dist/client/components/segment-cache/cache"
 import { getCurrentBillingPeriodStart } from "../subscriptions-constants"
 
@@ -39,9 +40,17 @@ export const endVoiceSession = async (
 ): Promise<EndSessionResult> => {
     try {
         await connectToDatabase()
+        const { userId } = await auth()
 
-        const session = await VoiceSession.findByIdAndUpdate(
-            sessionId,
+        if (!userId) {
+            return {
+                success: false,
+                error: "unauthorized user not authenticated",
+            }
+        }
+
+        const session = await VoiceSession.findOneAndUpdate(
+            { _id: sessionId, clerkId: userId },
             {
                 endedAt: new Date(),
                 durationSeconds,
